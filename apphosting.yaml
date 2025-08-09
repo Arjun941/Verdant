@@ -1,0 +1,7 @@
+# Firebase App Hosting settings.
+# See https://firebase.google.com/docs/app-hosting/configure for more options.
+
+runConfig:
+  # To handle more traffic, you can automatically scale up the number of
+  # server instances by increasing this value.
+  maxInstances: 1
