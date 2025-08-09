@@ -1,6 +1,6 @@
 {
-  "name": "VerdantView",
-  "short_name": "VerdantView",
+  "name": "Verdant",
+  "short_name": "Verdant",
   "description": "Effortless expense tracking and categorization.",
   "start_url": "/",
   "display": "standalone",
