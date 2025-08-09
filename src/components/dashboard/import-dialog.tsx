@@ -10,12 +10,13 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { FileUp, Loader2 } from 'lucide-react';
+import { FileUp, Loader2, Brain, CheckCircle2, Upload, FileText } from 'lucide-react';
 import Papa from 'papaparse';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ImportDialogProps = {
   isOpen: boolean;
@@ -142,10 +143,200 @@ export function ImportDialog({ isOpen, onClose, onSuccess }: ImportDialogProps) 
 
     const isPending = isCategorizePending || isAddPending;
 
+    // Animation variants
+    const stageVariants = {
+        initial: { opacity: 0, x: 50 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: -50 }
+    };
+
+    const loadingVariants = {
+        initial: { scale: 0.8, opacity: 0 },
+        animate: { 
+            scale: 1, 
+            opacity: 1,
+            transition: { duration: 0.5, ease: "easeOut" }
+        },
+        exit: { scale: 0.8, opacity: 0 }
+    };
+
+    const pulseVariants = {
+        animate: {
+            scale: [1, 1.05, 1],
+            transition: {
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+            }
+        }
+    };
+
+    const spinVariants = {
+        animate: {
+            rotate: 360,
+            transition: {
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear"
+            }
+        }
+    };
+
+    const renderAnalyzingAnimation = () => (
+        <motion.div
+            variants={loadingVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="flex flex-col items-center justify-center gap-6 py-16"
+        >
+            <div className="relative">
+                <motion.div
+                    variants={spinVariants}
+                    animate="animate"
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 blur-xl"
+                />
+                <motion.div
+                    variants={pulseVariants}
+                    animate="animate"
+                    className="relative bg-background border-2 border-primary/20 rounded-full p-6"
+                >
+                    <Brain className="h-12 w-12 text-primary" />
+                </motion.div>
+            </div>
+            
+            <div className="text-center space-y-2">
+                <motion.h3
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-lg font-semibold"
+                >
+                    AI is analyzing your transactions
+                </motion.h3>
+                <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-muted-foreground"
+                >
+                    This usually takes a few seconds...
+                </motion.p>
+            </div>
+
+            <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "200px" }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="h-1 bg-gradient-to-r from-primary to-accent rounded-full"
+            />
+        </motion.div>
+    );
+
+    const renderSavingAnimation = () => (
+        <motion.div
+            variants={loadingVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="flex flex-col items-center justify-center gap-6 py-16"
+        >
+            <div className="relative">
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="bg-accent/10 rounded-full p-6"
+                >
+                    <Upload className="h-12 w-12 text-accent" />
+                </motion.div>
+                
+                {/* Floating particles */}
+                {[...Array(3)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 bg-accent/60 rounded-full"
+                        initial={{ 
+                            x: 0, 
+                            y: 0, 
+                            opacity: 0 
+                        }}
+                        animate={{
+                            x: [0, 30 + i * 10, 0],
+                            y: [0, -40 - i * 10, 0],
+                            opacity: [0, 1, 0],
+                        }}
+                        transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            delay: i * 0.3,
+                            ease: "easeInOut"
+                        }}
+                        style={{
+                            left: '50%',
+                            top: '50%',
+                        }}
+                    />
+                ))}
+            </div>
+            
+            <div className="text-center space-y-2">
+                <motion.h3
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-lg font-semibold"
+                >
+                    Saving transactions
+                </motion.h3>
+                <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-muted-foreground"
+                >
+                    Adding {parsedTransactions.length} transactions to your account...
+                </motion.p>
+            </div>
+
+            <motion.div
+                className="flex gap-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+            >
+                {[...Array(3)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className="w-2 h-2 bg-accent rounded-full"
+                        animate={{
+                            y: [0, -10, 0],
+                        }}
+                        transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            delay: i * 0.2,
+                            ease: "easeInOut"
+                        }}
+                    />
+                ))}
+            </motion.div>
+        </motion.div>
+    );
+
     const renderUploadStage = () => (
-        <Fragment>
+        <motion.div
+            variants={stageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+        >
             <DialogHeader>
-                <DialogTitle>Import Transactions</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Import Transactions
+                </DialogTitle>
                 <DialogDescription>
                     Upload a CSV file or paste bulk transaction text to be categorized by AI.
                 </DialogDescription>
@@ -156,47 +347,105 @@ export function ImportDialog({ isOpen, onClose, onSuccess }: ImportDialogProps) 
                     <TabsTrigger value="csv">Upload CSV</TabsTrigger>
                 </TabsList>
                 <TabsContent value="paste" className="mt-4">
-                     <Textarea
-                        placeholder="Paste your transaction data here. One transaction per line is best."
-                        className="min-h-[200px]"
-                        value={bulkText}
-                        onChange={(e) => setBulkText(e.target.value)}
-                        disabled={isPending}
-                    />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <Textarea
+                            placeholder="Paste your transaction data here. One transaction per line is best."
+                            className="min-h-[200px]"
+                            value={bulkText}
+                            onChange={(e) => setBulkText(e.target.value)}
+                            disabled={isPending}
+                        />
+                    </motion.div>
                 </TabsContent>
-                 <TabsContent value="csv" className="mt-4">
-                    <label htmlFor="csv-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <FileUp className="w-10 h-10 mb-3 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground">
-                                <span className="font-semibold">Click to upload</span> or drag and drop
-                            </p>
-                            <p className="text-xs text-muted-foreground">CSV file</p>
-                            {fileName && <p className="text-xs text-primary mt-2">{fileName}</p>}
-                        </div>
-                        <Input id="csv-upload" type="file" className="hidden" accept=".csv" onChange={handleFileChange} disabled={isPending}/>
-                    </label>
+                <TabsContent value="csv" className="mt-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <label htmlFor="csv-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                            <motion.div 
+                                className="flex flex-col items-center justify-center pt-5 pb-6"
+                                whileHover={{ scale: 1.02 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                            >
+                                <motion.div
+                                    animate={fileName ? { scale: [1, 1.1, 1] } : {}}
+                                    transition={{ duration: 0.5 }}
+                                >
+                                    <FileUp className={`w-10 h-10 mb-3 ${fileName ? 'text-primary' : 'text-muted-foreground'}`} />
+                                </motion.div>
+                                <p className="mb-2 text-sm text-muted-foreground">
+                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-xs text-muted-foreground">CSV file</p>
+                                <AnimatePresence>
+                                    {fileName && (
+                                        <motion.p
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8 }}
+                                            className="text-xs text-primary mt-2 flex items-center gap-1"
+                                        >
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            {fileName}
+                                        </motion.p>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                            <Input id="csv-upload" type="file" className="hidden" accept=".csv" onChange={handleFileChange} disabled={isPending}/>
+                        </label>
+                    </motion.div>
                 </TabsContent>
             </Tabs>
             <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" onClick={onClose} disabled={isPending}>Cancel</Button>
-                <Button onClick={handleAnalyze} disabled={isPending}>
-                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Analyze
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button onClick={handleAnalyze} disabled={isPending || !bulkText}>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Analyzing...
+                            </>
+                        ) : (
+                            <>
+                                <Brain className="mr-2 h-4 w-4" />
+                                Analyze
+                            </>
+                        )}
+                    </Button>
+                </motion.div>
             </DialogFooter>
-        </Fragment>
+        </motion.div>
     );
     
     const renderReviewStage = () => (
-         <Fragment>
+        <motion.div
+            variants={stageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+        >
             <DialogHeader>
-                <DialogTitle>Review Transactions</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-accent" />
+                    Review Transactions
+                </DialogTitle>
                 <DialogDescription>
                     Review and edit the transactions identified by the AI.
                 </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[50vh] overflow-y-auto pr-2">
+            <motion.div 
+                className="max-h-[50vh] overflow-y-auto pr-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+            >
                 <Table>
                     <TableHeader className="sticky top-0 bg-background">
                         <TableRow>
@@ -209,7 +458,13 @@ export function ImportDialog({ isOpen, onClose, onSuccess }: ImportDialogProps) 
                     </TableHeader>
                     <TableBody>
                         {parsedTransactions.map((t, i) => (
-                            <TableRow key={i}>
+                            <motion.tr
+                                key={i}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.05, duration: 0.3 }}
+                                className="border-b transition-colors hover:bg-muted/50"
+                            >
                                 <TableCell><Input value={t.description} onChange={e => handleTransactionChange(i, 'description', e.target.value)} /></TableCell>
                                 <TableCell><Input type="number" value={t.amount} onChange={e => handleTransactionChange(i, 'amount', parseFloat(e.target.value))} /></TableCell>
                                 <TableCell><Input value={t.category} onChange={e => handleTransactionChange(i, 'category', e.target.value)} /></TableCell>
@@ -219,32 +474,60 @@ export function ImportDialog({ isOpen, onClose, onSuccess }: ImportDialogProps) 
                                         {t.isIncome ? 'Income' : 'Expense'}
                                     </Badge>
                                 </TableCell>
-                            </TableRow>
+                            </motion.tr>
                         ))}
                     </TableBody>
                 </Table>
-            </div>
-             <DialogFooter>
+            </motion.div>
+            <DialogFooter>
                 <Button variant="outline" onClick={() => setStage(Stage.Upload)} disabled={isPending}>Back</Button>
-                <Button onClick={handleSave} disabled={isPending}>
-                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save {parsedTransactions.length} Transactions
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button onClick={handleSave} disabled={isPending}>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Save {parsedTransactions.length} Transactions
+                            </>
+                        )}
+                    </Button>
+                </motion.div>
             </DialogFooter>
-         </Fragment>
+        </motion.div>
     );
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-4xl">
-               {stage === Stage.Upload && renderUploadStage()}
-               {stage === Stage.Review && renderReviewStage()}
-               {stage === Stage.Saving && (
-                 <div className="flex flex-col items-center justify-center gap-4 py-12">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Saving transactions...</p>
-                 </div>
-               )}
+                <AnimatePresence mode="wait">
+                    {stage === Stage.Upload && !isCategorizePending && (
+                        <motion.div key="upload">
+                            {renderUploadStage()}
+                        </motion.div>
+                    )}
+                    
+                    {isCategorizePending && (
+                        <motion.div key="analyzing">
+                            {renderAnalyzingAnimation()}
+                        </motion.div>
+                    )}
+                    
+                    {stage === Stage.Review && !isAddPending && (
+                        <motion.div key="review">
+                            {renderReviewStage()}
+                        </motion.div>
+                    )}
+                    
+                    {(stage === Stage.Saving || isAddPending) && (
+                        <motion.div key="saving">
+                            {renderSavingAnimation()}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </DialogContent>
         </Dialog>
     );

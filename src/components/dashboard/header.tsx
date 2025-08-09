@@ -16,6 +16,7 @@ import { use, useEffect, useState } from 'react';
 import type { UserProfile } from '@/lib/types';
 import { getUserProfile } from '@/lib/firestore';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 
 const navItems = [
@@ -46,16 +47,32 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-       <Link href="/dashboard" className="sm:hidden flex items-center gap-2 text-primary">
-            <Image src="/icon.png" alt="Verdant Logo" width={36} height={36} className="h-9 w-9 rounded-full" />
-            <span className="sr-only">Verdant</span>
-      </Link>
+    <motion.header 
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur-md px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6"
+    >
+       <motion.div
+         initial={{ scale: 0, rotate: -180 }}
+         animate={{ scale: 1, rotate: 0 }}
+         transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 200 }}
+       >
+         <Link href="/dashboard" className="sm:hidden flex items-center gap-2 text-primary transition-transform hover:scale-105">
+              <Image src="/icon.png" alt="Verdant Logo" width={36} height={36} className="h-9 w-9 rounded-full" />
+              <span className="sr-only">Verdant</span>
+        </Link>
+       </motion.div>
       <div className="relative flex-1" />
-       <div className="sm:hidden">
+       <motion.div 
+         className="sm:hidden"
+         initial={{ scale: 0, opacity: 0 }}
+         animate={{ scale: 1, opacity: 1 }}
+         transition={{ duration: 0.5, delay: 0.4 }}
+       >
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="overflow-hidden rounded-full h-9 w-9">
+              <Button variant="ghost" size="icon" className="overflow-hidden rounded-full h-9 w-9 transition-all duration-300 hover:scale-110 hover:shadow-md active:scale-95">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.photoURL || undefined} alt={profile?.displayName || ''} />
                   <AvatarFallback>{getInitials(profile?.displayName)}</AvatarFallback>
@@ -76,7 +93,7 @@ export default function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-    </header>
+      </motion.div>
+    </motion.header>
   );
 }

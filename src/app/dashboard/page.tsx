@@ -19,6 +19,7 @@ import { handleDeleteTransaction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { BalanceDialog } from '@/components/dashboard/balance-dialog';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -138,18 +139,51 @@ export default function DashboardPage() {
   if (loadingAuth || loadingData) {
     return (
        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-        <Skeleton className="h-8 w-1/4 mb-4" />
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Skeleton className="h-8 w-1/4 mb-4" />
+        </motion.div>
+        <motion.div 
+          className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {[1, 2, 3, 4].map((item, index) => (
+            <motion.div
+              key={item}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.3 + (index * 0.1),
+                type: "spring",
+                stiffness: 300 
+              }}
+            >
+              <Skeleton className="h-28" />
+            </motion.div>
+          ))}
+        </motion.div>
+        <motion.div 
+          className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+        >
           <Skeleton className="xl:col-span-2 h-[400px]" />
           <Skeleton className="h-[400px]" />
-        </div>
-        <Skeleton className="h-[300px]" />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.9 }}
+        >
+          <Skeleton className="h-[300px]" />
+        </motion.div>
       </div>
     );
   }
@@ -157,72 +191,143 @@ export default function DashboardPage() {
   return (
     <>
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-        <div className="flex justify-between items-center">
+        <motion.div 
+          className="flex justify-between items-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
             <h1 className="text-2xl font-semibold tracking-tight">{greeting}, {displayName}!</h1>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          <KpiCard title="Total Spending" value={`₹${totalSpending.toFixed(2)}`} icon={IndianRupee} description="Total amount spent this month" />
-          <KpiCard title="Transactions" value={transactions.length.toString()} icon={CreditCard} description="Total transactions this month" />
-          <KpiCard title="Average Transaction" value={`₹${averageTransaction.toFixed(2)}`} icon={Activity} description="Average transaction value" />
-          <KpiCard title="Current Balance" value={`₹${balance.toFixed(2)}`} icon={Pencil} description="Click to edit your balance" onClick={() => setIsBalanceDialogOpen(true)} isInteractive />
-        </div>
+        </motion.div>
+        
+        <motion.div 
+          className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {[
+            { title: "Total Spending", value: `₹${totalSpending.toFixed(2)}`, icon: IndianRupee, description: "Total amount spent this month" },
+            { title: "Transactions", value: transactions.length.toString(), icon: CreditCard, description: "Total transactions this month" },
+            { title: "Average Transaction", value: `₹${averageTransaction.toFixed(2)}`, icon: Activity, description: "Average transaction value" },
+            { title: "Current Balance", value: `₹${balance.toFixed(2)}`, icon: Pencil, description: "Click to edit your balance", onClick: () => setIsBalanceDialogOpen(true), isInteractive: true }
+          ].map((kpi, index) => (
+            <motion.div
+              key={kpi.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.3 + (index * 0.1),
+                type: "spring",
+                stiffness: 300 
+              }}
+            >
+              <KpiCard {...kpi} />
+            </motion.div>
+          ))}
+        </motion.div>
+        
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
           <div className="xl:col-span-2 grid gap-4 auto-rows-max">
-             <Card>
-                <CardHeader>
-                  <CardTitle>Spending Overview</CardTitle>
-                  <CardDescription>A chart showing your spending by category.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <SpendingChart transactions={transactions} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2">
-                   <Lightbulb className="h-6 w-6 text-yellow-400" />
-                   <div className="flex-1">
-                    <CardTitle>AI Insights</CardTitle>
-                    <CardDescription>A quick summary of your spending habits.</CardDescription>
-                   </div>
-                </CardHeader>
-                <CardContent>
-                  {loadingInsights ? (
-                    <Skeleton className="h-12 w-full" />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{latestInsightSummary}</p>
-                  )}
-                </CardContent>
-                <CardFooter>
-                   <Link href="/dashboard/insights" className="text-sm text-primary hover:underline">
-                      View Detailed Analysis
-                    </Link>
-                </CardFooter>
-              </Card>
+             <motion.div
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ duration: 0.6, delay: 0.7 }}
+             >
+               <Card className="transition-all duration-300 hover:shadow-lg border-border/50 hover:border-border">
+                  <CardHeader>
+                    <CardTitle>Spending Overview</CardTitle>
+                    <CardDescription>A chart showing your spending by category.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                     <SpendingChart transactions={transactions} />
+                  </CardContent>
+                </Card>
+             </motion.div>
+             
+             <motion.div
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ duration: 0.6, delay: 0.9 }}
+             >
+               <Card className="transition-all duration-300 hover:shadow-lg border-border/50 hover:border-border">
+                  <CardHeader className="flex flex-row items-center gap-2">
+                     <motion.div
+                       animate={{ rotate: [0, 10, -10, 0] }}
+                       transition={{ 
+                         duration: 2,
+                         repeat: Infinity,
+                         repeatDelay: 5,
+                         ease: "easeInOut"
+                       }}
+                     >
+                       <Lightbulb className="h-6 w-6 text-yellow-400" />
+                     </motion.div>
+                     <div className="flex-1">
+                      <CardTitle>AI Insights</CardTitle>
+                      <CardDescription>A quick summary of your spending habits.</CardDescription>
+                     </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingInsights ? (
+                      <Skeleton className="h-12 w-full" />
+                    ) : (
+                      <motion.p 
+                        className="text-sm text-muted-foreground"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.1 }}
+                      >
+                        {latestInsightSummary}
+                      </motion.p>
+                    )}
+                  </CardContent>
+                  <CardFooter>
+                     <Link href="/dashboard/insights" className="text-sm text-primary hover:underline transition-all duration-200 hover:scale-105">
+                        View Detailed Analysis
+                      </Link>
+                  </CardFooter>
+                </Card>
+             </motion.div>
           </div>
-          <Card>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <Card className="transition-all duration-300 hover:shadow-lg border-border/50 hover:border-border">
+              <CardHeader>
+                <CardTitle>AI Transaction Entry</CardTitle>
+                <CardDescription>Use natural language to add a transaction.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AiTransactionForm onTransactionAdded={handleTransactionAdded} onTransactionSaved={handleMutationComplete} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.0 }}
+        >
+          <Card className="transition-all duration-300 hover:shadow-lg border-border/50 hover:border-border">
             <CardHeader>
-              <CardTitle>AI Transaction Entry</CardTitle>
-              <CardDescription>Use natural language to add a transaction.</CardDescription>
+              <CardTitle>Recent Transactions</CardTitle>
+              <CardDescription>Your 5 most recent transactions.</CardDescription>
             </CardHeader>
             <CardContent>
-              <AiTransactionForm onTransactionAdded={handleTransactionAdded} onTransactionSaved={handleMutationComplete} />
+              <TransactionsTable 
+                transactions={transactions.slice(0, 5)} 
+                showPagination={false} 
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteRequest}
+              />
             </CardContent>
           </Card>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Your 5 most recent transactions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TransactionsTable 
-              transactions={transactions.slice(0, 5)} 
-              showPagination={false} 
-              onEdit={handleEditTransaction}
-              onDelete={handleDeleteRequest}
-            />
-          </CardContent>
-        </Card>
+        </motion.div>
       </div>
 
       <TransactionDialog

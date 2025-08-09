@@ -3,6 +3,7 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
 import type { Transaction } from '@/lib/types';
+import { motion } from 'framer-motion';
 
 type SpendingChartProps = {
   transactions: Transaction[];
@@ -25,7 +26,12 @@ export default function SpendingChart({ transactions }: SpendingChartProps) {
 
 
   return (
-    <div className="h-[300px]">
+    <motion.div 
+      className="h-[300px]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData}>
           <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
@@ -43,6 +49,6 @@ export default function SpendingChart({ transactions }: SpendingChartProps) {
           <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }
