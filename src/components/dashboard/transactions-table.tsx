@@ -38,26 +38,27 @@ export default function TransactionsTable({
       transition={{ duration: 0.6, delay: 0.3 }}
     >
       <Card className="transition-all duration-300 hover:shadow-lg border-border/50 hover:border-border">
-        <CardHeader className="px-7">
+        <CardHeader className="px-4 sm:px-7">
           <CardTitle>Transactions</CardTitle>
           <CardDescription>A list of your recent transactions.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead className="hidden sm:table-cell">Category</TableHead>
-                <TableHead className="hidden sm:table-cell">Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                 {(onEdit || onDelete) && <TableHead className="w-[50px]"><span className="sr-only">Actions</span></TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.length === 0 && (
+        <CardContent className="px-3 sm:px-7">
+          <div className="overflow-x-auto -mx-1 sm:mx-0">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">No transactions found.</TableCell>
+                  <TableHead className="min-w-[120px] text-left">Description</TableHead>
+                  <TableHead className="hidden sm:table-cell">Category</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="text-right min-w-[80px]">Amount</TableHead>
+                   {(onEdit || onDelete) && <TableHead className="w-[50px]"><span className="sr-only">Actions</span></TableHead>}
                 </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">No transactions found.</TableCell>
+                  </TableRow>
               )}
               {transactions.map((transaction, index) => (
                 <motion.tr
@@ -110,6 +111,7 @@ export default function TransactionsTable({
               ))}
             </TableBody>
           </Table>
+          </div>
           {showPagination && (
             <motion.div 
               className="flex items-center justify-center space-x-2 py-4"

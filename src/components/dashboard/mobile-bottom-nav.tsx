@@ -21,9 +21,10 @@ export default function MobileBottomNav() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 border-t z-50 backdrop-blur-md"
+      className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 border-t z-50 backdrop-blur-md pb-safe"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
+      <div className="grid h-full w-full grid-cols-4 max-w-full px-2">
         {navItems.map((item, index) => {
           const isActive = pathname === item.href;
           return (
@@ -37,11 +38,12 @@ export default function MobileBottomNav() {
                 type: "spring",
                 stiffness: 300 
               }}
+              className="flex-1"
             >
               <Link
                 href={item.href}
                 className={cn(
-                  'inline-flex flex-col items-center justify-center px-5 hover:bg-muted-foreground/10 group relative h-full transition-all duration-300',
+                  'flex flex-col items-center justify-center px-2 py-2 hover:bg-muted-foreground/10 group relative h-full transition-all duration-300 w-full',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
@@ -49,15 +51,16 @@ export default function MobileBottomNav() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   transition={{ type: "spring", stiffness: 400 }}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center justify-center"
                 >
                   <motion.div
                     animate={isActive ? { scale: 1.1 } : { scale: 1 }}
                     transition={{ type: "spring", stiffness: 300 }}
+                    className="mb-1"
                   >
-                    <item.icon className="w-5 h-5 mb-1" />
+                    <item.icon className="w-5 h-5" />
                   </motion.div>
-                  <span className="text-xs">{item.label}</span>
+                  <span className="text-xs font-medium leading-none">{item.label}</span>
                 </motion.div>
                 {isActive && (
                   <motion.div
