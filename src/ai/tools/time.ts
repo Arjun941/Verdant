@@ -7,26 +7,53 @@ export const getCurrentTime = ai.defineTool(
   {
     name: 'getCurrentTime',
     description: 'Gets the current date and time. Use this to resolve relative times like "today" or "now".',
-    inputSchema: z.object({}),
+    inputSchema: z.object({
+      timezone: z.string().optional().describe('IANA timezone identifier (e.g., America/New_York, Asia/Kolkata). Defaults to UTC.'),
+    }),
     outputSchema: z.object({
       currentTime: z.string().describe('The current time in ISO 8601 format.'),
+      timezone: z.string().describe('The timezone used for the current time.'),
     }),
   },
-  async () => {
+  async (input) => {
+    const timezone = input.timezone || 'UTC';
+    
     try {
-      // Fetches the current time from an external API to ensure accuracy.
-      const response = await fetch('https://worldtimeapi.org/api/ip', {
-        cache: 'no-store',
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return { currentTime: data.utc_datetime };
+      // Use current system time directly instead of external API
+      const now = new Date();
+      console.log('getCurrentTime called with timezone:', timezone, 'Current time:', now.toISOString());
+      
+      const timeInTimezone = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).formatToParts(now);
+      
+      const year = timeInTimezone.find(part => part.type === 'year')?.value;
+      const month = timeInTimezone.find(part => part.type === 'month')?.value;
+      const day = timeInTimezone.find(part => part.type === 'day')?.value;
+      const hour = timeInTimezone.find(part => part.type === 'hour')?.value;
+      const minute = timeInTimezone.find(part => part.type === 'minute')?.value;
+      const second = timeInTimezone.find(part => part.type === 'second')?.value;
+      
+      const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
+      console.log('Returning current time:', isoString, 'for timezone:', timezone);
+      
+      return { 
+        currentTime: isoString,
+        timezone: timezone
+      };
     } catch (error) {
-        console.error("Failed to fetch time from worldtimeapi, falling back to local time.", error);
-        // Fallback to the server's local time if the API fails.
-        return { currentTime: new Date().toISOString() };
+        console.error("Failed to get current time, using fallback.", error);
+      return { 
+        currentTime: new Date().toISOString(),
+        timezone: timezone
+      };
     }
   }
 );

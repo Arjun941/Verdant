@@ -65,7 +65,7 @@ const bulkCategorizeTransactionsFlow = ai.defineFlow(
     outputSchema: BulkCategorizeTransactionsOutputSchema,
   },
   async input => {
-    // A basic check to prevent overly large inputs.
+    // Prevent processing extremely long text to maintain performance
     // Average token length is ~4 chars. Gemini flash has a large context, so 100k chars is a safe-ish limit.
     if (input.bulkText.length > 100000) {
         throw new Error("The provided text is too long. Please shorten it and try again.");

@@ -7,7 +7,10 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>Update your name and profile picture.</CardDescription>
+          <CardDescription>
+            Update your name, profile picture, balance, and timezone. 
+            Your timezone is used for accurate transaction timestamps.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <SettingsForm />

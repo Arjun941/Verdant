@@ -57,7 +57,7 @@ export function ImportDialog({ isOpen, onClose, onSuccess }: ImportDialogProps) 
 
     useEffect(() => {
         if (!isOpen) {
-            // Reset state on close
+            // Clear everything when dialog closes
             setStage(Stage.Upload);
             setBulkText('');
             setFileName('');

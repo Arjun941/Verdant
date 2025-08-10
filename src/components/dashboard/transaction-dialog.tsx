@@ -2,7 +2,7 @@
 'use client';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,8 @@ import { handleAddTransaction, handleUpdateTransaction, TransactionFormState } f
 import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
+import { getUserProfile } from '@/lib/firestore';
+import { formatDateInTimezone, getCurrentDateTimeInTimezone, convertToTimezone } from '@/lib/timezone';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
@@ -39,6 +41,7 @@ export function TransactionDialog({ isOpen, onClose, onSuccess, transaction }: T
   const [user] = useAuthState(auth);
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+  const [userTimezone, setUserTimezone] = useState<string>('UTC');
 
   const formAction = transaction ? handleUpdateTransaction : handleAddTransaction;
   const initialState: TransactionFormState = { message: '', success: false };
@@ -53,6 +56,17 @@ export function TransactionDialog({ isOpen, onClose, onSuccess, transaction }: T
     },
   });
 
+  // Get the user's timezone for date display
+  useEffect(() => {
+    if (user) {
+      getUserProfile(user.uid).then((profile) => {
+        if (profile?.timezone) {
+          setUserTimezone(profile.timezone);
+        }
+      });
+    }
+  }, [user]);
+
   useEffect(() => {
     if (transaction) {
       form.reset({
@@ -62,10 +76,11 @@ export function TransactionDialog({ isOpen, onClose, onSuccess, transaction }: T
         category: transaction.category,
       });
     } else {
+      // Start with today's date
       form.reset({
         description: '',
         amount: 0,
-        date: new Date(),
+        date: new Date(), // Today's date
         category: '',
       });
     }
@@ -101,7 +116,11 @@ export function TransactionDialog({ isOpen, onClose, onSuccess, transaction }: T
           >
             <input type="hidden" name="userId" value={user?.uid || ''} />
             {transaction && <input type="hidden" name="transactionId" value={transaction.id} />}
-            <input type="hidden" name="date" value={form.watch('date')?.toISOString() || ''} />
+            <input 
+              type="hidden" 
+              name="date" 
+              value={form.watch('date')?.toISOString() || ''} 
+            />
 
             <FormField
               control={form.control}
@@ -165,7 +184,7 @@ export function TransactionDialog({ isOpen, onClose, onSuccess, transaction }: T
                             !field.value && 'text-muted-foreground'
                           )}
                         >
-                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                          {field.value ? formatDateInTimezone(field.value, userTimezone, 'PPP') : <span>Pick a date</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>

@@ -3,7 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import type { Transaction } from '@/lib/types';
 import { Button } from '../ui/button';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { formatDateInTimezone } from '@/lib/timezone';
+import { getUserProfile } from '@/lib/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
 import { MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { motion } from 'framer-motion';
@@ -21,6 +26,19 @@ export default function TransactionsTable({
   onEdit,
   onDelete
 }: TransactionsTableProps) {
+  const [user] = useAuthState(auth);
+  const [userTimezone, setUserTimezone] = useState<string>('UTC');
+  
+  // Get user's timezone for proper date formatting
+  useEffect(() => {
+    if (user) {
+      getUserProfile(user.uid).then((profile) => {
+        if (profile?.timezone) {
+          setUserTimezone(profile.timezone);
+        }
+      });
+    }
+  }, [user]);
   const getCategoryBadgeVariant = (category: Transaction['category']) => {
     switch (category) {
       case 'Groceries': return 'default';
@@ -87,7 +105,7 @@ export default function TransactionsTable({
                       </Badge>
                     </motion.div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{format(new Date(transaction.date), 'PPp')}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{formatDateInTimezone(transaction.date, userTimezone, 'PPp')}</TableCell>
                   <TableCell className={`text-right font-semibold ${transaction.amount < 0 ? 'text-destructive' : 'text-green-600'}`}>
                     {transaction.amount < 0 ? '-' : '+'}₹{Math.abs(transaction.amount).toFixed(2)}
                   </TableCell>

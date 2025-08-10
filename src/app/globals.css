@@ -40,3 +40,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Custom markdown styling for better integration with dark theme */
+  .prose-insights h1,
+  .prose-insights h2,
+  .prose-insights h3,
+  .prose-insights h4,
+  .prose-insights h5,
+  .prose-insights h6 {
+    @apply text-foreground font-semibold;
+  }
+  
+  .prose-insights p {
+    @apply text-muted-foreground leading-relaxed mb-3;
+  }
+  
+  .prose-insights strong {
+    @apply text-foreground font-semibold;
+  }
+  
+  .prose-insights ul,
+  .prose-insights ol {
+    @apply text-muted-foreground;
+  }
+  
+  .prose-insights li {
+    @apply mb-1;
+  }
+  
+  .prose-insights blockquote {
+    @apply border-l-primary text-muted-foreground;
+  }
+}

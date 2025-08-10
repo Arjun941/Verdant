@@ -14,11 +14,14 @@ import type { UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleUpdateProfile } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { getCommonTimezones } from '@/lib/timezone';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50),
-  photoDataUrl: z.string().optional(),
+  photoDataUrl: z.string().optional().or(z.literal('')),
   balance: z.coerce.number().min(0, { message: 'Balance must be a positive number.' }).optional(),
+  timezone: z.string().optional().or(z.literal('')),
 });
 
 export function SettingsForm() {
@@ -32,8 +35,9 @@ export function SettingsForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       displayName: '',
-      photoDataUrl: undefined,
-      balance: 0,
+      photoDataUrl: '',
+      balance: undefined,
+      timezone: '',
     },
   });
 
@@ -44,7 +48,9 @@ export function SettingsForm() {
           setProfile(p);
           form.reset({ 
             displayName: p.displayName || '',
-            balance: p.balance || 0,
+            photoDataUrl: '',
+            balance: p.balance || undefined,
+            timezone: p.timezone || '',
           });
         }
       });
@@ -70,15 +76,22 @@ export function SettingsForm() {
       return;
     }
 
+    console.log('Form values:', values);
+
     const formData = new FormData();
     formData.append('displayName', values.displayName);
     if (values.photoDataUrl) {
       formData.append('photoDataUrl', values.photoDataUrl);
     }
-    if (values.balance !== undefined) {
+    if (values.balance !== undefined && values.balance !== null && !isNaN(values.balance)) {
       formData.append('balance', values.balance.toString());
     }
+    if (values.timezone && values.timezone !== '') {
+      formData.append('timezone', values.timezone);
+    }
     formData.append('userId', user.uid);
+    
+    console.log('FormData entries:', Array.from(formData.entries()));
     
     startTransition(async () => {
       const result = await handleUpdateProfile(formData);
@@ -133,6 +146,31 @@ export function SettingsForm() {
               <FormControl>
                 <Input type="number" placeholder="50000" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="timezone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Timezone</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your timezone" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {getCommonTimezones().map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

@@ -86,9 +86,8 @@ export default function AiTransactionForm({ onTransactionAdded, onTransactionSav
   
   const handleCancel = () => {
     resetAll();
-    // Because the transaction is already saved, we refetch to correct the state.
-    // A more robust solution might use a two-phase commit, but this is simpler.
-     onTransactionSaved();
+    // Refresh the transactions list when user cancels
+    onTransactionSaved();
   }
 
   const isPending = isCategorizePending || isSaving;
@@ -140,7 +139,7 @@ export default function AiTransactionForm({ onTransactionAdded, onTransactionSav
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Date:</span>
-              <span>{format(new Date(categorizeState.data.date), 'PPP')}</span>
+              <span>{format(new Date(categorizeState.data.date), 'PPp')}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Category:</span>

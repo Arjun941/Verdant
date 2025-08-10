@@ -12,6 +12,7 @@ import { handleAskVerdant } from '@/app/actions';
 import type { Transaction, Insight } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 type AskVerdantChatProps = {
   transactions: Transaction[];
@@ -54,7 +55,7 @@ export default function AskVerdantChat({ transactions, insights }: AskVerdantCha
   const formRef = useRef<HTMLFormElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Greet user on first load
+  // Welcome message when chat first loads
   useEffect(() => {
     setMessages([
       {
@@ -64,7 +65,7 @@ export default function AskVerdantChat({ transactions, insights }: AskVerdantCha
     ]);
   }, []);
 
-  // Handle form submission and response
+  // Send questions to Verdant and show answers
   const handleFormSubmit = (formData: FormData) => {
     const question = formData.get('question') as string;
     if (!question.trim()) return;
@@ -76,7 +77,7 @@ export default function AskVerdantChat({ transactions, insights }: AskVerdantCha
     formRef.current?.reset();
   };
 
-  // Add AI response to messages
+  // Show response from Verdant AI
   useEffect(() => {
     if (state.answer || state.error) {
         const content = state.answer || `Sorry, an error occurred: ${state.error}`;
@@ -159,19 +160,25 @@ export default function AskVerdantChat({ transactions, insights }: AskVerdantCha
                       }
                     `}
                   >
-                    <div className="space-y-2">
-                      {message.content.split('\n').map((line, i) => (
-                        <motion.p
-                          key={i}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.1 }}
-                          className={`leading-relaxed ${message.role === 'assistant' ? 'text-foreground' : ''}`}
-                        >
-                          {line}
-                        </motion.p>
-                      ))}
-                    </div>
+                    {message.role === 'user' ? (
+                      <div className="space-y-2">
+                        {message.content.split('\n').map((line, i) => (
+                          <motion.p
+                            key={i}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="leading-relaxed"
+                          >
+                            {line}
+                          </motion.p>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="prose-insights">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                    )}
                   </motion.div>
                   
                   {message.role === 'user' && (

@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { Insight, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateSpendingInsights } from '@/ai/flows/generate-insights';
+import ReactMarkdown from 'react-markdown';
 
 export default function InsightsPage() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -58,13 +59,13 @@ export default function InsightsPage() {
         const newInsight: Omit<Insight, 'id'> = { ...result, createdAt: new Date().toISOString() };
         await addInsight(user.uid, newInsight);
 
-        // Maintain a history of 7 insights
+        // Keep the latest 7 insights for better performance
         if (existingInsights.length >= 7) {
             const oldestInsight = existingInsights[existingInsights.length - 1];
             await deleteInsight(user.uid, oldestInsight.id);
         }
         
-        // Fetch the updated list
+        // Show the latest insights on screen
         const updatedInsights = await getInsights(user.uid);
         setInsights(updatedInsights);
 
@@ -123,12 +124,10 @@ export default function InsightsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <h3 className="font-semibold mb-2">{insights[0].summary}</h3>
-                    {insights[0].detailedAnalysis.split('\n').map((paragraph, index) => (
-                        <p key={index} className="mb-4 text-muted-foreground">
-                            {paragraph}
-                        </p>
-                    ))}
+                    <h3 className="font-semibold mb-4">{insights[0].summary}</h3>
+                    <div className="prose-insights">
+                        <ReactMarkdown>{insights[0].detailedAnalysis}</ReactMarkdown>
+                    </div>
                 </CardContent>
             </Card>
         ) : (

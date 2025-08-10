@@ -17,6 +17,8 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { updateUserProfile } from '@/lib/firestore';
+import { getUserTimezone, detectTimezoneFromLocation } from '@/lib/timezone';
 
 
 const formSchema = z.object({
@@ -42,11 +44,33 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      let userCredential;
       if (mode === 'signup') {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
+        userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       } else {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
+        userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       }
+
+      // First-time users get automatic timezone detection
+      if (mode === 'signup' || userCredential) {
+        try {
+          const detectedTimezone = await detectTimezoneFromLocation();
+          await updateUserProfile(userCredential.user.uid, {
+            timezone: detectedTimezone,
+            displayName: userCredential.user.displayName || '',
+            email: userCredential.user.email || '',
+          });
+          
+          toast({
+            title: 'Welcome!',
+            description: `Your timezone has been set to ${detectedTimezone}. You can change this in Settings.`,
+          });
+        } catch (timezoneError) {
+          console.error('Error setting timezone:', timezoneError);
+          // Location detection is optional during signup
+        }
+      }
+
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -60,7 +84,27 @@ export function AuthForm({ mode }: AuthFormProps) {
   async function handleGoogleSignIn() {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      
+      // Set timezone automatically for new users
+      try {
+        const detectedTimezone = await detectTimezoneFromLocation();
+        await updateUserProfile(userCredential.user.uid, {
+          timezone: detectedTimezone,
+          displayName: userCredential.user.displayName || '',
+          email: userCredential.user.email || '',
+          photoURL: userCredential.user.photoURL || '',
+        });
+        
+        toast({
+          title: 'Welcome!',
+          description: `Your timezone has been set to ${detectedTimezone}. You can change this in Settings.`,
+        });
+      } catch (timezoneError) {
+        console.error('Error setting timezone:', timezoneError);
+        // Location detection is optional during login
+      }
+
       router.push('/dashboard');
     } catch (error: any) {
       toast({

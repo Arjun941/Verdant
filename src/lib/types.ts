@@ -12,6 +12,7 @@ export type UserProfile = {
   email?: string;
   photoURL?: string;
   balance?: number;
+  timezone?: string; // IANA timezone identifier (e.g., 'America/New_York')
 };
 
 export type Insight = {

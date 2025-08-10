@@ -21,10 +21,10 @@ export default function MobileBottomNav() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 border-t z-50 backdrop-blur-md pb-safe"
+      className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 border-t z-50 backdrop-blur-md"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="grid h-full w-full grid-cols-4 max-w-full px-2">
+      <div className="grid h-full w-full grid-cols-4 relative">
         {navItems.map((item, index) => {
           const isActive = pathname === item.href;
           return (
@@ -43,7 +43,7 @@ export default function MobileBottomNav() {
               <Link
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center justify-center px-2 py-2 hover:bg-muted-foreground/10 group relative h-full transition-all duration-300 w-full',
+                  'flex flex-col items-center justify-center py-2 hover:bg-muted-foreground/10 group h-full transition-all duration-300 w-full',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
@@ -62,16 +62,26 @@ export default function MobileBottomNav() {
                   </motion.div>
                   <span className="text-xs font-medium leading-none">{item.label}</span>
                 </motion.div>
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-b-full"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
               </Link>
             </motion.div>
+          );
+        })}
+        {/* Active indicator positioned absolutely based on active item index */}
+        {navItems.map((item, index) => {
+          const isActive = pathname === item.href;
+          if (!isActive) return null;
+          
+          return (
+            <motion.div
+              key="activeIndicator"
+              layoutId="activeTab"
+              className="absolute top-0 w-6 h-1 bg-primary rounded-b-full"
+              style={{
+                left: `${(index * 25) + 12.5 - 3}%`, // Positions indicator at the center of each navigation item
+              }}
+              initial={false}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
           );
         })}
       </div>

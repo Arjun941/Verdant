@@ -29,8 +29,9 @@ const transactionSchema = z.object({
 const updateProfileSchema = z.object({
   userId: z.string(),
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50),
-  photoDataUrl: z.string().optional(),
-  balance: z.coerce.number().optional(),
+  photoDataUrl: z.string().optional().or(z.literal('')),
+  balance: z.coerce.number().min(0, { message: 'Balance must be a positive number.' }).optional(),
+  timezone: z.string().optional().or(z.literal('')),
 });
 
 const askVerdantSchema = z.object({
@@ -91,41 +92,53 @@ export async function handleCategorizeTransaction(
   const { transactionDetails, userId } = validatedFields.data;
 
   try {
-    const result = await categorizeTransaction({ transactionDetails });
     const userProfile = await getUserProfile(userId);
+    
+    const result = await categorizeTransaction({ 
+      transactionDetails 
+    });
+    
+    // Add current system time as the transaction date
+    const currentTimeISO = new Date().toISOString();
+    
+    const transactionData = {
+      ...result,
+      date: currentTimeISO
+    };
+    
     const currentBalance = userProfile?.balance || 0;
     
     let newBalance;
     let message;
 
-    if (result.isIncome) {
-      newBalance = currentBalance + result.amount;
+    if (transactionData.isIncome) {
+      newBalance = currentBalance + transactionData.amount;
       await updateUserProfile(userId, { balance: newBalance });
-      message = `Income of ₹${result.amount.toFixed(2)} detected. Your balance has been updated to ₹${newBalance.toFixed(2)}.`;
+      message = `Income of ₹${transactionData.amount.toFixed(2)} detected. Your balance has been updated to ₹${newBalance.toFixed(2)}.`;
     } else {
       // It's an expense, so we still add the transaction and update the balance
       await addTransaction(userId, {
-        description: result.description,
-        amount: result.amount,
-        date: result.date,
-        category: result.category,
+        description: transactionData.description,
+        amount: transactionData.amount,
+        date: transactionData.date,
+        category: transactionData.category,
       });
-      newBalance = currentBalance - result.amount;
+      newBalance = currentBalance - transactionData.amount;
       await updateUserProfile(userId, { balance: newBalance });
-      message = `Expense of ₹${result.amount.toFixed(2)} added. Your new balance is ₹${newBalance.toFixed(2)}.`;
+      message = `Expense of ₹${transactionData.amount.toFixed(2)} added. Your new balance is ₹${newBalance.toFixed(2)}.`;
     }
     
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/settings');
     revalidatePath('/dashboard/transactions');
 
-    // For expenses, we return the data to show confirmation, for income, it's just a toast.
-    if (result.isIncome) {
+    // Expenses need confirmation, income gets saved directly
+    if (transactionData.isIncome) {
         return { message };
     } else {
         return {
             message: 'Transaction categorized successfully.',
-            data: result,
+            data: transactionData,
         };
     }
   } catch (error) {
@@ -250,25 +263,31 @@ export async function handleUpdateTransaction(
   }
 
 export async function handleUpdateProfile(formData: FormData): Promise<UpdateProfileFormState> {
-  const validatedFields = updateProfileSchema.safeParse({
+  const rawData = {
     userId: formData.get('userId'),
     displayName: formData.get('displayName'),
-    photoDataUrl: formData.get('photoDataUrl'),
+    photoDataUrl: formData.get('photoDataUrl') || undefined,
     balance: formData.get('balance') || undefined,
-  });
+    timezone: formData.get('timezone') || undefined,
+  };
+  
+  console.log('Raw form data:', rawData);
+  
+  const validatedFields = updateProfileSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
-    console.log(validatedFields.error.flatten());
-    return { success: false, message: "Invalid data provided." };
+    console.log('Validation errors:', validatedFields.error.flatten());
+    return { success: false, message: `Invalid data provided: ${validatedFields.error.issues.map(i => i.message).join(', ')}` };
   }
   
-  const { userId, displayName, photoDataUrl, balance } = validatedFields.data;
+  const { userId, displayName, photoDataUrl, balance, timezone } = validatedFields.data;
 
   try {
     await updateUserProfile(userId, {
       displayName,
       ...(photoDataUrl && { photoURL: photoDataUrl }),
       ...(balance !== undefined && { balance }),
+      ...(timezone && { timezone }),
     });
 
     revalidatePath('/dashboard');

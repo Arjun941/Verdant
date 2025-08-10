@@ -18,6 +18,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { handleDeleteTransaction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { BalanceDialog } from '@/components/dashboard/balance-dialog';
+import { TimezoneNotification } from '@/components/dashboard/timezone-notification';
+import { getCurrentHourInTimezone } from '@/lib/timezone';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -40,16 +42,35 @@ export default function DashboardPage() {
   
   const [greeting, setGreeting] = useState('');
 
+  // Show the right greeting based on time of day
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      setGreeting('Good morning');
-    } else if (hour < 18) {
-      setGreeting('Good afternoon');
-    } else {
-      setGreeting('Good evening');
-    }
-  }, []);
+    const updateGreeting = () => {
+      if (profile?.timezone) {
+        // What time is it where the user lives?
+        const hour = getCurrentHourInTimezone(profile.timezone);
+        
+        if (hour < 12) {
+          setGreeting('Good morning');
+        } else if (hour < 18) {
+          setGreeting('Good afternoon');
+        } else {
+          setGreeting('Good evening');
+        }
+      } else {
+        // Use device time if timezone isn't set yet
+        const hour = new Date().getHours();
+        if (hour < 12) {
+          setGreeting('Good morning');
+        } else if (hour < 18) {
+          setGreeting('Good afternoon');
+        } else {
+          setGreeting('Good evening');
+        }
+      }
+    };
+    
+    updateGreeting();
+  }, [profile?.timezone]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -199,6 +220,9 @@ export default function DashboardPage() {
         >
             <h1 className="text-2xl font-semibold tracking-tight">{greeting}, {displayName}!</h1>
         </motion.div>
+
+        {/* Timezone notification */}
+        <TimezoneNotification />
         
         <motion.div 
           className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
