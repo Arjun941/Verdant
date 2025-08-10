@@ -20,7 +20,7 @@ import { getCommonTimezones } from '@/lib/timezone';
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }).max(50),
   photoDataUrl: z.string().optional().or(z.literal('')),
-  balance: z.coerce.number().min(0, { message: 'Balance must be a positive number.' }).optional(),
+  balance: z.coerce.number().min(0, { message: 'Balance must be a positive number.' }),
   timezone: z.string().optional().or(z.literal('')),
 });
 
@@ -36,7 +36,7 @@ export function SettingsForm() {
     defaultValues: {
       displayName: '',
       photoDataUrl: '',
-      balance: undefined,
+      balance: 0,
       timezone: '',
     },
   });
@@ -49,7 +49,7 @@ export function SettingsForm() {
           form.reset({ 
             displayName: p.displayName || '',
             photoDataUrl: '',
-            balance: p.balance || undefined,
+            balance: p.balance || 0,
             timezone: p.timezone || '',
           });
         }
@@ -83,9 +83,7 @@ export function SettingsForm() {
     if (values.photoDataUrl) {
       formData.append('photoDataUrl', values.photoDataUrl);
     }
-    if (values.balance !== undefined && values.balance !== null && !isNaN(values.balance)) {
-      formData.append('balance', values.balance.toString());
-    }
+    formData.append('balance', values.balance.toString());
     if (values.timezone && values.timezone !== '') {
       formData.append('timezone', values.timezone);
     }
@@ -144,7 +142,13 @@ export function SettingsForm() {
             <FormItem>
               <FormLabel>Current Balance (₹)</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="50000" {...field} />
+                <Input 
+                  type="number" 
+                  placeholder="50000" 
+                  {...field}
+                  value={field.value?.toString() || ''} 
+                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
